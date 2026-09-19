@@ -1,0 +1,137 @@
+import time
+import random
+import pyautogui
+
+# ==================== 配置区 ====================
+# 启动等待时间：脚本运行后，给你几秒手动点击目标窗口
+START_DELAY = 3
+
+# 点一下的坐标
+CLICK_ONCE_POS = (1050, 761)
+
+# 双击的坐标
+DOUBLE_CLICK_POS = (987, 457)
+
+# 编号范围：0000 ~ 9999，共 10000 种
+START = 0
+END = 9999
+
+# 如果编号不允许前导 0，改成：
+# START = 1000
+# END = 9999
+
+# ============ 仿人类输入参数 ============
+KEY_INTERVAL_MIN = 0.05
+KEY_INTERVAL_MAX = 0.25
+
+PAUSE_CHANCE = 0.15
+PAUSE_MIN = 0.3
+PAUSE_MAX = 0.8
+# =======================================
+
+# 每个编号操作完成后的随机等待范围（秒）
+WAIT_MIN = 1.0
+WAIT_MAX = 5.0
+
+# 双击两次左键之间的间隔
+DOUBLE_CLICK_INTERVAL = 0.01
+
+# 点一下后等待
+WAIT_AFTER_CLICK_ONCE = 0.3
+
+# 双击后等待
+WAIT_AFTER_DOUBLE_CLICK = 0.05
+
+# 鼠标移动耗时，0 表示瞬间移动
+MOVE_DURATION = 0
+# ================================================
+
+# 安全设置：鼠标移到屏幕左上角可强制中断
+pyautogui.FAILSAFE = True
+pyautogui.PAUSE = 0
+
+# 记录已经用过的间隔，保证不重复
+used_delays = set()
+
+
+def human_type(text):
+    """仿人类输入：每个字符间隔随机，偶尔多停一下"""
+    for i, ch in enumerate(text):
+        pyautogui.write(ch)
+
+        if i == len(text) - 1:
+            break
+
+        delay = random.uniform(KEY_INTERVAL_MIN, KEY_INTERVAL_MAX)
+
+        if random.random() < PAUSE_CHANCE:
+            delay += random.uniform(PAUSE_MIN, PAUSE_MAX)
+
+        time.sleep(delay)
+
+
+def get_unique_delay(min_s, max_s):
+    """生成一个 1~5 秒之间、且之前没用过的随机间隔"""
+    while True:
+        d = round(random.uniform(min_s, max_s), 4)
+        if d not in used_delays:
+            used_delays.add(d)
+            return d
+
+
+def countdown(seconds):
+    """启动倒计时，让你有时间手动点击目标窗口"""
+    print(f"请在 {seconds} 秒内点击目标窗口，让它保持在前台...")
+    for i in range(seconds, 0, -1):
+        print(f"{i}...")
+        time.sleep(1)
+    print("开始！")
+
+
+def main():
+    # 启动倒计时，手动切窗口
+    countdown(START_DELAY)
+
+    # 生成所有不重复编号
+    codes = [f"{i:04d}" for i in range(START, END + 1)]
+
+    # ★ 随机打乱顺序，但每个编号只出现一次
+    random.shuffle(codes)
+
+    total = len(codes)
+    start_time = time.time()
+
+    for index, code in enumerate(codes, 1):
+        # 1. 仿人类键盘打出编号
+        human_type(code)
+
+        # 2. 鼠标移动到“点一下”的坐标，左键点击一下
+        pyautogui.moveTo(CLICK_ONCE_POS[0], CLICK_ONCE_POS[1], duration=MOVE_DURATION)
+        pyautogui.click(button='left')
+
+        # 3. 等待 0.3 秒
+        time.sleep(WAIT_AFTER_CLICK_ONCE)
+
+        # 4. 鼠标移动到“双击”的坐标，快速点击左键两下，间隔 0.01 秒
+        pyautogui.moveTo(DOUBLE_CLICK_POS[0], DOUBLE_CLICK_POS[1], duration=MOVE_DURATION)
+        pyautogui.click(clicks=2, interval=DOUBLE_CLICK_INTERVAL, button='left')
+
+        # 5. 等待 0.05 秒
+        time.sleep(WAIT_AFTER_DOUBLE_CLICK)
+
+        # 6. 按一下回退键
+        pyautogui.press('backspace')
+
+        # 7. 生成一个不重复的随机间隔
+        delay = get_unique_delay(WAIT_MIN, WAIT_MAX)
+
+        # 打印进度
+        elapsed = time.time() - start_time
+        print(f"[{index}/{total}] 编号 {code} 完成，本次等待 {delay} 秒，已用 {elapsed/60:.1f} 分钟")
+
+        # 8. 等待随机间隔，再进入下一个编号
+        time.sleep(delay)
+
+
+if __name__ == '__main__':
+    main()
