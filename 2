@@ -1,0 +1,31 @@
+import time
+import pyautogui
+
+# 等待几秒后获取坐标
+WAIT_SECONDS = 3
+
+
+def main():
+    print(f"请在 {WAIT_SECONDS} 秒内把鼠标移动到目标位置，不要动...")
+
+    # 倒计时
+    for i in range(WAIT_SECONDS, 0, -1):
+        print(f"{i}...")
+        time.sleep(1)
+
+    # 获取当前鼠标坐标
+    x, y = pyautogui.position()
+    print(f"当前鼠标坐标：X = {x}, Y = {y}")
+    print(f"可以直接复制到代码里：({x}, {y})")
+
+    # 可选：自动复制到剪贴板，需要安装 pyperclip
+    try:
+        import pyperclip
+        pyperclip.copy(f"({x}, {y})")
+        print("坐标已复制到剪贴板")
+    except ImportError:
+        print("提示：安装 pyperclip 可自动复制坐标：python -m pip install pyperclip")
+
+
+if __name__ == "__main__":
+    main()
