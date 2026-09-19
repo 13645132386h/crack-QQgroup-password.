@@ -1,0 +1,87 @@
+import time
+import random
+import pyautogui
+
+# ==================== 配置区 ====================
+# 启动等待时间：脚本运行后，给你几秒手动点击目标窗口
+START_DELAY = 3
+
+# 两个坐标，改成你自己的
+CLICK_ONCE_POS = (0, 0)      # 点一下的坐标
+DOUBLE_CLICK_POS = (0, 0)    # 双击的坐标
+
+# 编号范围：0000 ~ 9999，共 10000 种
+START = 0
+END = 9999
+
+# 输入4位编号时，每个数字之间的间隔
+INPUT_INTERVAL = 0.01
+
+# 双击两次左键之间的间隔
+DOUBLE_CLICK_INTERVAL = 0.01
+
+# 点一下后等待
+WAIT_AFTER_CLICK_ONCE = 0.3
+
+# 双击后等待
+WAIT_AFTER_DOUBLE_CLICK = 0.05
+
+# 鼠标移动耗时，0 表示瞬间移动
+MOVE_DURATION = 0
+# ================================================
+
+# 安全设置：鼠标移到屏幕左上角可强制中断
+pyautogui.FAILSAFE = True
+pyautogui.PAUSE = 0
+
+
+def countdown(seconds):
+    """启动倒计时，让你有时间手动点击目标窗口"""
+    print(f"请在 {seconds} 秒内点击目标窗口，让它保持在前台...")
+    for i in range(seconds, 0, -1):
+        print(f"{i}...")
+        time.sleep(1)
+    print("开始！")
+
+
+def main():
+    # 生成所有编号
+    codes = [f"{i:04d}" for i in range(START, END + 1)]
+
+    # 随机打乱顺序，每个编号只出现一次
+    random.shuffle(codes)
+
+    # 启动倒计时，手动切窗口
+    countdown(START_DELAY)
+
+    total = len(codes)
+    start_time = time.time()
+
+    for index, code in enumerate(codes, 1):
+        # 1. 键盘打出编号
+        pyautogui.write(code, interval=INPUT_INTERVAL)
+
+        # 2. 鼠标移动到“点一下”的坐标，左键点击一下
+        pyautogui.moveTo(CLICK_ONCE_POS[0], CLICK_ONCE_POS[1], duration=MOVE_DURATION)
+        pyautogui.click(button='left')
+
+        # 3. 等待 0.3 秒
+        time.sleep(WAIT_AFTER_CLICK_ONCE)
+
+        # 4. 鼠标移动到“双击”的坐标，快速点击左键两下，间隔 0.01 秒
+        pyautogui.moveTo(DOUBLE_CLICK_POS[0], DOUBLE_CLICK_POS[1], duration=MOVE_DURATION)
+        pyautogui.click(clicks=2, interval=DOUBLE_CLICK_INTERVAL, button='left')
+
+        # 5. 等待 0.05 秒
+        time.sleep(WAIT_AFTER_DOUBLE_CLICK)
+
+        # 6. 按一下回退键
+        pyautogui.press('backspace')
+
+        # 打印进度
+        elapsed = time.time() - start_time
+        print(f"[{index}/{total}] 编号 {code} 完成，已用 {elapsed/60:.1f} 分钟")
+
+
+if __name__ == '__main__':
+    main()
